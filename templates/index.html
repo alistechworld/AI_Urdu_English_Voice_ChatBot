@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اردو وائس چیٹ بوٹ</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 800px;
+            padding: 30px;
+            text-align: center;
+        }
+        h1 {
+            color: #4a6fa5;
+            margin-bottom: 20px;
+        }
+        .chat-box {
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            overflow-y: auto;
+            text-align: right;
+            direction: rtl;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            display: inline-block;
+            max-width: 70%;
+        }
+        .user-message {
+            background-color: #e3f2fd;
+            margin-left: auto;
+        }
+        .bot-message {
+            background-color: #f1f1f1;
+            margin-right: auto;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            flex: 1;
+        }
+        button:hover {
+            background-color: #3a5a80;
+            transform: translateY(-2px);
+        }
+        #recordBtn.recording {
+            background-color: #e74c3c;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌸 اردو وائس چیٹ بوٹ 🌸</h1>
+        
+        <div class="chat-box" id="chatBox">
+            <!-- Messages will appear here -->
+        </div>
+        
+        <div class="controls">
+            <button id="recordBtn">🎤 بولنا شروع کریں</button>
+            <button id="stopBtn" disabled>⏹️ روکیں</button>
+        </div>
+        
+        <audio id="responseAudio" controls></audio>
+    </div>
+
+    <script>
+        const recordBtn = document.getElementById('recordBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const chatBox = document.getElementById('chatBox');
+        const responseAudio = document.getElementById('responseAudio');
+        let mediaRecorder;
+        let audioChunks = [];
+        
+        // Check for microphone support
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('مائیکروفون سپورٹ دستیاب نہیں ہے');
+        } else {
+            // Record button click handler
+            recordBtn.addEventListener('click', async () => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = e => {
+                        if (e.data.size > 0) audioChunks.push(e.data);
+                    };
+                    
+                    mediaRecorder.onstop = async () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        await sendAudioToServer(audioBlob);
+                    };
+                    
+                    mediaRecorder.start();
+                    recordBtn.classList.add('recording');
+                    recordBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    
+                    addMessage('آپ: [بول رہے ہیں...]', 'user-message');
+                    
+                } catch (err) {
+                    console.error('Recording failed:', err);
+                    addMessage('سسٹم: ریکارڈنگ میں مسئلہ', 'bot-message');
+                }
+            });
+            
+            // Stop button click handler
+            stopBtn.addEventListener('click', () => {
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRec
